@@ -1,0 +1,53 @@
+server:
+  port: 8100
+spring:
+  cloud:
+    gateway:
+      #默认的拦截器,用于给请求头添加参数
+      default-filters:
+        - AddResponseHeader=source, taoli
+      #请求路由
+      routes:
+        #路由id
+        - id: api_route
+          #断言后转发的地址
+          uri: http://localhost:8101
+          #断言
+          predicates:
+            - Path=/api/**
+
+#        - id: add_request_header_route
+#          uri: http://localhost:8123
+#          predicates:
+#            - Path=/api/**
+#          filters:
+#            - AddRequestHeader=taoli, swag
+#            - AddRequestParameter=name, dog
+#            - name: CircuitBreaker
+#              args:
+#                name: myCircuitBreaker
+#                fallbackUri: forward:/fallback
+#        - id: taoli-fallback
+#          uri: https://baidu
+#          predicates:
+#            - Path=/fallback
+
+#调低gateway日志级别查看调用信息
+logging:
+  level:
+    org:
+      springframework:
+        cloud:
+          gateway: trace
+
+#dubbo配置,注意一定要2.0以上版本的Nacos,否则会报错
+dubbo:
+  application:
+    name: api-gateway
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    id: nacos-registry
+    address: nacos://localhost:8848
+
