@@ -8,13 +8,13 @@ spring:
         - AddResponseHeader=source, taoli
       #请求路由
       routes:
-        #路由id
-        - id: api_route
-          #断言后转发的地址
-          uri: http://localhost:8101
+        #路由id:转去给api接口服务
+        - id: apiService_route
+          #断言后转发的地址,path会原封不动转移过去
+          uri: http://localhost:8103
           #断言
           predicates:
-            - Path=/api/**
+            - Path=/api/apiService/**
 
 #        - id: add_request_header_route
 #          uri: http://localhost:8123

@@ -5,7 +5,7 @@ import com.taoli.project.common.ErrorCode;
 import com.taoli.project.exception.BusinessException;
 import com.taoli.project.mapper.UserMapper;
 import com.taoli.apicommon.model.entity.User;
-import com.taoli.apicommon.service.InnerUserService;
+import com.taoli.apicommon.dubboService.InnerUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboService;
 
@@ -24,6 +24,7 @@ public class InnerUserServiceImpl implements InnerUserService {
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("accessKey", accessKey);
-        return userMapper.selectOne(queryWrapper);
+        User user = userMapper.selectOne(queryWrapper);
+        return user;
     }
 }

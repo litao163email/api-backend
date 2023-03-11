@@ -3,6 +3,7 @@ package com.taoli.project.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.taoli.apiclientsdk.model.ClientParam;
 import com.taoli.project.annotation.AuthCheck;
 import com.taoli.project.common.*;
 import com.taoli.project.constant.CommonConstant;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -208,7 +211,7 @@ public class InterfaceInfoController {
     @PostMapping("/online")
     @AuthCheck(mustRole = "admin")
     public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest,
-                                                     HttpServletRequest request) {
+                                                     HttpServletRequest request) throws NoSuchMethodException {
         if (idRequest == null || idRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -219,12 +222,19 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         // 判断该接口是否可以调用
-        com.taoli.apiclientsdk.model.User user = new com.taoli.apiclientsdk.model.User();
-        user.setUsername("test");
-        String username = apiClient.getUsernameByPost(user);
-        if (StringUtils.isBlank(username)) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+        ClientParam clientParam = new ClientParam();
+        clientParam.setType("test");
+        try {
+            Method method = ApiClient.class.getMethod(oldInterfaceInfo.getName(), ClientParam.class);
+            log.info("判断该接口{}是否可以调用",method.toString());
+            String invoke = (String)method.invoke(apiClient,clientParam);
+            if (StringUtils.isBlank(invoke)) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+            }
+        } catch (Exception e) {
+            log.info(e.getMessage());
         }
+
         // 仅本人或管理员可修改
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         interfaceInfo.setId(id);
@@ -262,7 +272,7 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 测试调用
+     * 在线测试调用
      *
      * @param interfaceInfoInvokeRequest
      * @param request
@@ -284,14 +294,29 @@ public class InterfaceInfoController {
         if (oldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.OFFLINE.getValue()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已关闭");
         }
+        //使用调用者的key进行调用
         User loginUser = userService.getLoginUser(request);
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
         ApiClient tempClient = new ApiClient(accessKey, secretKey);
         Gson gson = new Gson();
-        com.taoli.apiclientsdk.model.User user = gson.fromJson(userRequestParams, com.taoli.apiclientsdk.model.User.class);
-        String usernameByPost = tempClient.getUsernameByPost(user);
-        return ResultUtils.success(usernameByPost);
+        ClientParam clientParam = gson.fromJson(userRequestParams, ClientParam.class);
+
+        String invoke="接口错误,请联系管理员";
+        try {
+            //根据不同接口名字反射方法
+            Method method = ApiClient.class.getMethod(oldInterfaceInfo.getName(),ClientParam.class);
+            log.info("判断该接口{}是否可以调用",method.toString());
+            invoke = (String)method.invoke(tempClient, clientParam);
+
+//            invoke = tempClient.getText(clientParam);
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+        }
+
+        return ResultUtils.success(invoke);
     }
 
 }

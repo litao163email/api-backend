@@ -5,7 +5,7 @@ import com.taoli.project.common.ErrorCode;
 import com.taoli.project.exception.BusinessException;
 import com.taoli.project.mapper.InterfaceInfoMapper;
 import com.taoli.apicommon.model.entity.InterfaceInfo;
-import com.taoli.apicommon.service.InnerInterfaceInfoService;
+import com.taoli.apicommon.dubboService.InnerInterfaceInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboService;
 

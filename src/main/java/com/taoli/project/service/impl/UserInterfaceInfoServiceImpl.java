@@ -2,6 +2,8 @@ package com.taoli.project.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.taoli.apicommon.model.entity.InterfaceInfo;
+import com.taoli.project.mapper.InterfaceInfoMapper;
 import com.taoli.project.service.UserInterfaceInfoService;
 import com.taoli.project.common.ErrorCode;
 import com.taoli.project.exception.BusinessException;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserInterfaceInfoServiceImpl extends ServiceImpl<UserInterfaceInfoMapper, UserInterfaceInfo>
     implements UserInterfaceInfoService {
+
 
     @Override
     public void validUserInterfaceInfo(UserInterfaceInfo userInterfaceInfo, boolean add) {
@@ -39,13 +42,17 @@ public class UserInterfaceInfoServiceImpl extends ServiceImpl<UserInterfaceInfoM
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         UpdateWrapper<UserInterfaceInfo> updateWrapper = new UpdateWrapper<>();
+
         updateWrapper.eq("interfaceInfoId", interfaceInfoId);
         updateWrapper.eq("userId", userId);
-
-//        updateWrapper.gt("leftNum", 0);
         updateWrapper.setSql("leftNum = leftNum - 1, totalNum = totalNum + 1");
+        boolean update = this.update(updateWrapper);
+
         return this.update(updateWrapper);
     }
+
+
+
 
 }
 

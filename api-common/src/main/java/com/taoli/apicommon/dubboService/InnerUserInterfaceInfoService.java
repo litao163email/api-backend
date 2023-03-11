@@ -1,6 +1,7 @@
-package com.taoli.apicommon.service;
+package com.taoli.apicommon.dubboService;
 
 /**
+ * 统计
  * @author taoli
  */
 public interface InnerUserInterfaceInfoService {

@@ -26,6 +26,11 @@ public class User implements Serializable {
     private String userName;
 
     /**
+     * 剩余api调用次数
+     */
+    private Integer apiCount;
+
+    /**
      * 账号
      */
     private String userAccount;

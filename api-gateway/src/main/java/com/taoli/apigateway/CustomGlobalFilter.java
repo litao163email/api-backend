@@ -3,9 +3,9 @@ package com.taoli.apigateway;
 import com.taoli.apiclientsdk.utils.SignUtils;
 import com.taoli.apicommon.model.entity.InterfaceInfo;
 import com.taoli.apicommon.model.entity.User;
-import com.taoli.apicommon.service.InnerInterfaceInfoService;
-import com.taoli.apicommon.service.InnerUserInterfaceInfoService;
-import com.taoli.apicommon.service.InnerUserService;
+import com.taoli.apicommon.dubboService.InnerInterfaceInfoService;
+import com.taoli.apicommon.dubboService.InnerUserInterfaceInfoService;
+import com.taoli.apicommon.dubboService.InnerUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.reactivestreams.Publisher;
@@ -48,8 +48,14 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
 
     private static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
 
-    private static final String INTERFACE_HOST = "http://localhost:8123";
+    private static final String INTERFACE_HOST = "http://localhost:8103";
 
+    /**
+     * 该网关主要是对SDK的请求进行统一管理(SDK的http请求没有跨域这么一说,跨域是针对浏览器的)
+     * @param exchange servlet请求对象
+     * @param chain 其它拦截器
+     * @return
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         // 1. 请求日志
@@ -76,9 +82,10 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         String timestamp = headers.getFirst("timestamp");
         String sign = headers.getFirst("sign");
         String body = headers.getFirst("body");
-        // todo 实际情况应该是去数据库中查是否已分配给用户
+        //数据库中查是否accessKey已分配给用户
         User invokeUser = null;
         try {
+            //使用dubbo进行请求
             invokeUser = innerUserService.getInvokeUser(accessKey);
         } catch (Exception e) {
             log.error("getInvokeUser error", e);
@@ -86,9 +93,10 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (invokeUser == null) {
             return handleNoAuth(response);
         }
-//        if (!"taoli".equals(accessKey)) {
-//            return handleNoAuth(response);
-//        }
+//        //如果调用次数小于等于0,则直接返回无权限
+        if (invokeUser.getApiCount() <= 0) {
+            return handleNoAuth(response);
+        }
 
         // 时间和当前时间不能超过 5 分钟
         Long currentTime = System.currentTimeMillis() / 1000;
@@ -100,7 +108,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (Long.parseLong(nonce) > 10000L) {
             return handleNoAuth(response);
         }
-        // 实际情况中是从数据库中查出 secretKey
+        // 从数据库中查出 secretKey
         String secretKey = invokeUser.getSecretKey();
         String serverSign = SignUtils.genSign(body, secretKey);
         if (sign == null || !sign.equals(serverSign)) {
@@ -109,6 +117,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         // 4. 请求的模拟接口是否存在，以及请求方法是否匹配
         InterfaceInfo interfaceInfo = null;
         try {
+            //使用dubbo进行请求
             interfaceInfo = innerInterfaceInfoService.getInterfaceInfo(path, method);
         } catch (Exception e) {
             log.error("getInterfaceInfo error", e);
@@ -116,10 +125,6 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (interfaceInfo == null) {
             return handleNoAuth(response);
         }
-        // todo 是否还有调用次数
-        // 5. 请求转发，调用模拟接口 + 响应日志
-        //        Mono<Void> filter = chain.filter(exchange);
-        //        return filter;
         return handleResponse(exchange, chain, interfaceInfo.getId(), invokeUser.getId());
 
     }
@@ -151,6 +156,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                             // 拼接字符串
                             return super.writeWith(
                                     fluxBody.map(dataBuffer -> {
+                                        //使用dubbo
                                         // 7. 调用成功，接口调用次数 + 1 invokeCount
                                         try {
                                             innerUserInterfaceInfoService.invokeCount(interfaceInfoId, userId);

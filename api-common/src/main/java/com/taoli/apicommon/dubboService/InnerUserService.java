@@ -1,4 +1,4 @@
-package com.taoli.apicommon.service;
+package com.taoli.apicommon.dubboService;
 
 import com.taoli.apicommon.model.entity.User;
 
@@ -8,6 +8,7 @@ import com.taoli.apicommon.model.entity.User;
  *
  * @author taoli
  */
+
 public interface InnerUserService {
 
     /**

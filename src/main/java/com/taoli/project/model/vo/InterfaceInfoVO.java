@@ -14,10 +14,19 @@ import lombok.EqualsAndHashCode;
 @Data
 public class InterfaceInfoVO extends InterfaceInfo {
 
+    public InterfaceInfoVO(Integer totalNum,String name){
+        this.totalNum=totalNum;
+        this.name=name;
+    }
+
     /**
      * 调用次数
      */
     private Integer totalNum;
+    /**
+     * 接口名称
+     */
+    private String name;
 
     private static final long serialVersionUID = 1L;
 }
