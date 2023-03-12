@@ -15,6 +15,7 @@ import java.util.Map;
 
 /**
  * 调用第三方接口的客户端
+ * 统一返回字符串(否则可能会返回转换异常)
  *
  * @author taoli
  */
@@ -51,10 +52,25 @@ public class ApiClient {
         return result;
     }
 
+
+    /**
+     * 编辑距离算法（用于计算最相似的两个字符串）
+     * @param clientParam
+     * @return
+     */
+    public String minDistance(ClientParam clientParam) {
+        String result = postBodySet(clientParam, "minDistance");
+        if(StringUtils.isBlank(result)){
+            throw new RuntimeException("获取接口数据为空");
+        }
+        return result;
+    }
+
+
     /**
      * 固定
      */
-    private String postBodySet(ClientParam clientParam,String method) {
+    private  String postBodySet(ClientParam clientParam,String method) {
         String body = JSONUtil.toJsonStr(clientParam);
         String url=GATEWAY_HOST + "/api/apiService/"+method;
         HttpResponse httpResponse = HttpRequest.post(url)

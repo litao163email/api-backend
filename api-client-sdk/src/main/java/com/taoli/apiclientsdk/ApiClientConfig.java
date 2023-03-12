@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * @author taoli
  */
 @Configuration
+//标注使用sdk者需要输入的信息
 @ConfigurationProperties("api.client")
 @Data
 @ComponentScan

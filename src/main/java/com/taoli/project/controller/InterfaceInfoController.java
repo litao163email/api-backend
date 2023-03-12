@@ -313,7 +313,7 @@ public class InterfaceInfoController {
 
         } catch (Exception e) {
             log.info(e.getMessage());
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口可用性测试失败");
         }
 
         return ResultUtils.success(invoke);
